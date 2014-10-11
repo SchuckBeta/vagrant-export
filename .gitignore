@@ -1,0 +1,4 @@
+/.idea
+/.vagrant
+/Gemfile.lock
+Vagrantfile
