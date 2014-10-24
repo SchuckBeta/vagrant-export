@@ -33,10 +33,7 @@ module VagrantPlugins
         end
 
         return 1 unless export
-
-        unless bare
-          return 1 unless files
-        end
+        return 1 unless files(bare)
 
         finalize
       end
@@ -116,7 +113,7 @@ module VagrantPlugins
         @logger.debug "Exported VM to #{exported_path}"
       end
 
-      def files
+      def files(bare)
 
         # Add metadata json
         begin
@@ -130,7 +127,7 @@ module VagrantPlugins
         source_include_path = File.join(@vm.box.directory, 'include')
 
         # Copy includes
-        if Dir.exist?(source_include_path)
+        if Dir.exist?(source_include_path) && !bare
           FileUtils.cp_r(source_include_path, @tmp_path)
         end
 
