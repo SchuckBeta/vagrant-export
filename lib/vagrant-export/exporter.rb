@@ -126,28 +126,46 @@ module VagrantPlugins
           metadata.close
         end
 
-        target_include_path = File.join @tmp_path, 'include'
-        source_include_path = File.join @vm.box.directory, 'include'
+        target_include_path = File.join(@tmp_path, 'include')
+        source_include_path = File.join(@vm.box.directory, 'include')
 
         # Copy includes
-        if Dir.exist? source_include_path
-          FileUtils.cp_r source_include_path, @tmp_path
-
-        # Add the orignal vagrant file as include
-        else
-          FileUtils.mkpath target_include_path
-          Dir.glob(File.join(@vm.box.directory, '**', '*')).each do |file|
-            if file.to_s =~ /Vagrantfile$/
-              FileUtils.cp file.to_s, File.join(target_include_path, '_Vagrantfile')
-            end
-          end
+        if Dir.exist?(source_include_path)
+          FileUtils.cp_r(source_include_path, @tmp_path)
         end
 
-        # Add the mac address setting as a Vagrantfile
-        File.open(File.join(@tmp_path, 'Vagrantfile'), 'wb') do |f|
-          f.write(Vagrant::Util::TemplateRenderer.render('package_Vagrantfile', {
-              base_mac: @vm.provider.driver.read_mac_address
-          }))
+        original_vagrantfile = File.join(@vm.box.directory, 'include')
+        vagrantfile_exists   = File.exist?(original_vagrantfile)
+        vagrantfile_has_mac  = false
+
+        # Check the original vagrant file for a mac settings
+        if vagrantfile_exists
+          File.readlines(original_vagrantfile).each { |line|
+            if line.to_s =~ /base_mac\s*=\s*("|')[a-z0-9]+("|')/i
+              vagrantfile_has_mac = true
+            end
+          }
+        end
+
+        # Otherwise, just put copy it
+        if vagrantfile_has_mac
+          FileUtils.cp(original_vagrantfile, File.join(@tmp_path, 'Vagrantfile'))
+
+        # If none, create a new one that has the mac setting,
+        # and includes the original
+        # The new Vagrantfile will include the old one, which
+        # is put into the includeds directory
+        else
+          File.open(File.join(@tmp_path, 'Vagrantfile'), 'wb') do |file|
+            file.write(Vagrant::Util::TemplateRenderer.render('package_Vagrantfile', {
+                base_mac: @vm.provider.driver.read_mac_address
+            }))
+          end
+
+          if vagrantfile_exists
+            FileUtils.mkdir_p(target_include_path) unless Dir.exist?(target_include_path)
+            FileUtils.cp(original_vagrantfile, File.join(target_include_path, '_Vagrantfile'))
+          end
         end
 
         # Make a box file out of it
