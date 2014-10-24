@@ -166,7 +166,7 @@ module VagrantPlugins
         if File.exist? @box_file_name
           box_name = @vm.box.name.gsub '/', '_'
           target_box = File.join @env.cwd, box_name + '.box'
-          File.rename @box_file_name, target_box
+          FileUtils.mv @box_file_name, target_box
         end
 
         # Remove the tmp files
