@@ -36,7 +36,7 @@ module VagrantPlugins
         ex = Exporter.new(@env, @logger)
 
         with_target_vms argv, reverse: true do |machine|
-          ex.handle machine, options[:fast], options[:bare]
+          ex.handle(machine, options[:fast], options[:bare])
         end
         0
       end

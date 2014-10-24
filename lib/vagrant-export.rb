@@ -3,5 +3,5 @@
 # the terms of the MIT- / X11 - License                                 #
 #                                                                       #
 
-require "vagrant-export/plugin"
-require "vagrant-export/version"
+require 'vagrant-export/plugin'
+require 'vagrant-export/version'

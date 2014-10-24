@@ -19,7 +19,7 @@ module VagrantPlugins
       # @param vm Vagrant::Machine
       # @param fast Boolean
       # @param bare Boolean
-      def handle vm, fast, bare
+      def handle(vm, fast, bare)
         @vm = vm
         @did_run = false
 
@@ -27,7 +27,7 @@ module VagrantPlugins
           if can_compress
             compress
           else
-            @env.uid.error 'Cannot compress this type of machine'
+            @env.uid.error('Cannot compress this type of machine')
             return 1
           end
         end
@@ -45,14 +45,14 @@ module VagrantPlugins
         if @vm.state.short_description == 'running'
           @did_run = true
         else
-          @env.ui.info 'Machine not running, bringing it up'
-          @vm.action :up
+          @env.ui.info('Machine not running, bringing it up')
+          @vm.action(:up)
         end
 
         compress_supported = false
 
         if @vm.config.vm.communicator != :winrm
-          @vm.communicate.execute 'lsb_release -i -s', error_key: :ssh_bad_exit_status_muted do |type, data|
+          @vm.communicate.execute('lsb_release -i -s', error_key: :ssh_bad_exit_status_muted) do |type, data|
             if type == :stdout && data.to_s =~ /mint|ubuntu|debian/i
               compress_supported = true
             end
@@ -68,25 +68,25 @@ module VagrantPlugins
         source_script = File.expand_path('../../../res/cleanup.sh', __FILE__)
         comm = @vm.communicate
 
-        @logger.debug "Uploading #{source_script} to #{target_script}"
-        comm.upload source_script, target_script
+        @logger.debug("Uploading #{source_script} to #{target_script}")
+        comm.upload(source_script, target_script)
 
-        sudo comm, "chmod +x #{target_script}"
-        sudo comm, "#{target_script}"
+        sudo(comm, "chmod +x #{target_script}")
+        sudo(comm, "#{target_script}")
 
         0
       end
 
-      def sudo communicator, command
-        @logger.debug "Execute '#{command}'"
-        communicator.sudo command, error_key: :ssh_bad_exit_status_muted do |type, data|
+      def sudo(communicator, command)
+        @logger.debug("Execute '#{command}'")
+        communicator.sudo(command, error_key: :ssh_bad_exit_status_muted) do |type, data|
           if [:stderr, :stdout].include?(type)
             return if data.empty?
             data = data.to_s.chomp.strip
             if type == :stdout
-                @vm.ui.info data
+              @vm.ui.info(data)
             else
-              @vm.ui.error data
+              @vm.ui.error(data)
             end
           end
         end
@@ -95,22 +95,22 @@ module VagrantPlugins
       def export
         # Halt the machine
         if @vm.state.short_description == 'running'
-          @env.ui.info 'Halting VM for export'
+          @env.ui.info('Halting VM for export')
           @vm.action(:halt)
         end
 
         # Export to file
-        exported_path = File.join @env.tmp_path, Time.now.to_i.to_s
+        exported_path = File.join(@env.tmp_path, Time.now.to_i.to_s)
         @tmp_path = exported_path
-        FileUtils.mkpath exported_path
+        FileUtils.mkdir_p(exported_path)
 
-        @env.ui.info I18n.t 'vagrant.actions.vm.export.exporting'
+        @env.ui.info('Exporting machine')
         @vm.provider.driver.export File.join(exported_path, 'box.ovf') do |progress|
           @env.ui.clear_line
-          @env.ui.report_progress progress.percent, 100, false
+          @env.ui.report_progress(progress.percent, 100, false)
         end
 
-        @logger.debug "Exported VM to #{exported_path}"
+        @logger.debug("Exported VM to #{exported_path}")
       end
 
       def files(bare)
@@ -118,7 +118,7 @@ module VagrantPlugins
         # Add metadata json
         begin
           metadata = File.open(File.join(@tmp_path, 'metadata.json'), 'wb')
-          metadata.write '{"provider":"' + @vm.provider_name.to_s + '"}'
+          metadata.write('{"provider":"' + @vm.provider_name.to_s + '"}')
         ensure
           metadata.close
         end
@@ -178,19 +178,20 @@ module VagrantPlugins
 
       def finalize
         # Rename the box file
-        if File.exist? @box_file_name
-          box_name = @vm.box.name.gsub '/', '_'
-          target_box = File.join @env.cwd, box_name + '.box'
-          FileUtils.mv @box_file_name, target_box
+        if File.exist?(@box_file_name)
+          box_name = @vm.box.name.gsub('/', '_')
+          target_box = File.join(@env.cwd, box_name + '.box')
+          FileUtils.mv(@box_file_name, target_box)
+          @env.ui.info('Created ' + target_box)
         end
 
         # Remove the tmp files
-        FileUtils.rm_rf @tmp_path
+        FileUtils.rm_rf(@tmp_path)
 
         # Resume the machine
         if @did_run
-          @env.ui.info 'Bringing the machine back up'
-          @vm.action :up
+          @env.ui.info('Bringing the machine back up')
+          @vm.action(:up)
         end
       end
     end
