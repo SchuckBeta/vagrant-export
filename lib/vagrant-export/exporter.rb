@@ -131,14 +131,14 @@ module VagrantPlugins
           FileUtils.cp_r(source_include_path, @tmp_path)
         end
 
-        original_vagrantfile = File.join(@vm.box.directory, 'include')
+        original_vagrantfile = File.join(@vm.box.directory, 'Vagrantfile')
         vagrantfile_exists   = File.exist?(original_vagrantfile)
         vagrantfile_has_mac  = false
 
         # Check the original vagrant file for a mac settings
         if vagrantfile_exists
           File.readlines(original_vagrantfile).each { |line|
-            if line.to_s =~ /base_mac\s*=\s*("|')[a-z0-9]+("|')/i
+            if line.to_s =~ /base_mac\s*=\s*("|')/i
               vagrantfile_has_mac = true
             end
           }
