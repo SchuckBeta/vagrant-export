@@ -19,6 +19,7 @@ module VagrantPlugins
       # @param vm Vagrant::Machine
       # @param fast Boolean
       # @param bare Boolean
+      # @return string
       def handle(vm, fast, bare)
         @vm = vm
         @did_run = false
@@ -36,6 +37,8 @@ module VagrantPlugins
         return 1 unless files(bare)
 
         finalize
+
+        @target_box
       end
 
       protected
@@ -180,9 +183,9 @@ module VagrantPlugins
         # Rename the box file
         if File.exist?(@box_file_name)
           box_name = @vm.box.name.gsub('/', '_')
-          target_box = File.join(@env.cwd, box_name + '.box')
-          FileUtils.mv(@box_file_name, target_box)
-          @env.ui.info('Created ' + target_box)
+          @target_box = File.join(@env.cwd, box_name + '.box')
+          FileUtils.mv(@box_file_name, @target_box)
+          @env.ui.info('Created ' + @target_box)
         end
 
         # Remove the tmp files
