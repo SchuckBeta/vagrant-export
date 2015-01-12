@@ -14,6 +14,9 @@ do
 
 done
 
+echo "Reset vagrant authorized keys file"
+wget --no-check-certificate 'https://raw.github.com/mitchellh/vagrant/master/keys/vagrant.pub' -O '/home/vagrant/.ssh/authorized_keys'
+
 echo "Removing old kernel packages"
 apt-get -y --purge remove $(dpkg --list | grep '^rc' | awk '{print $2}')
 apt-get -y --purge remove $(dpkg --list | egrep 'linux-image-[0-9]' | awk '{print $3,$2}' | sort -nr | tail -n +2 | grep -v $(uname -r) | awk '{ print $2}')
@@ -54,12 +57,12 @@ if [[ -d /var/www/var/cache ]]; then
     rm -rf /var/www/var/tmp/*
 fi
 
-echo "Sync to disc"
-sync
-
 echo "Zeroing device to make space..."
 dd if=/dev/zero of=/EMPTY bs=1M
 rm -f /EMPTY
+
+echo "Sync to disc"
+sync
 
 echo "Exit happily"
 exit 0
