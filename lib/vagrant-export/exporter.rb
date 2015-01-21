@@ -147,7 +147,7 @@ module VagrantPlugins
           }
         end
 
-        # Otherwise, just put copy it
+        # If it has one, just copy it
         if vagrantfile_has_mac
           FileUtils.cp(original_vagrantfile, File.join(@tmp_path, 'Vagrantfile'))
 
@@ -162,6 +162,8 @@ module VagrantPlugins
             }))
           end
 
+          # If there is a Vagrantfile, but without a mac
+          # ensure it is included
           if vagrantfile_exists
             FileUtils.mkdir_p(target_include_path) unless Dir.exist?(target_include_path)
             FileUtils.cp(original_vagrantfile, File.join(target_include_path, '_Vagrantfile'))
@@ -172,7 +174,7 @@ module VagrantPlugins
         @box_file_name = @tmp_path + '.box'
 
         Vagrant::Util::SafeChdir.safe_chdir(@tmp_path) do
-          files = Dir.glob File.join('.', '**', '*')
+          files = Dir.glob(File.join('.', '**', '*'))
           Vagrant::Util::Subprocess.execute('bsdtar', '-czf', @box_file_name, *files)
         end
 
