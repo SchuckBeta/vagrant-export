@@ -13,7 +13,7 @@ module VagrantPlugins
 
       def execute
         options = {}
-        options[:quick] = false
+        options[:fast] = false
         options[:bare] = false
 
         opts = OptionParser.new do |o|
