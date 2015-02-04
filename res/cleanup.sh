@@ -14,7 +14,9 @@ do
 done
 
 echo "Reset vagrant authorized keys file"
-wget -q --no-check-certificate 'https://raw.github.com/mitchellh/vagrant/master/keys/vagrant.pub' -O '/home/vagrant/.ssh/authorized_keys'
+wget -q --no-check-certificate 'https://raw.github.com/mitchellh/vagrant/master/keys/vagrant.pub' -O '/tmp/auth_keys'
+cat /tmp/auth_keys >> /home/vagrant/.ssh/authorized_keys
+rm /tmp/auth_keys
 
 echo "Removing old kernel packages"
 apt-get -qq -y --purge remove $(dpkg --list | egrep '^rc' | awk '{print $2}')
@@ -32,32 +34,42 @@ rm -rf $HOME/.local
 rm -rf $HOME/.npm
 rm -rf $HOME/tmp
 
-if [[ -d /var/www/typo3temp ]]; then
-    echo "Removing TYPO3 CMS temp files"
-    find /var/www/typo3temp -type f -exec rm -f {} \;
-    find /var/www/typo3temp -type d -iname "_processed_" -exec rm -rf {} \; > /dev/null 2>&1
+if [[ -d /www ]]; then
+    DOCROOT="/www"
+elif [[ -d /var/www/html ]]; then
+    DOCROOT="/var/www/html"
+else
+    DOCROOT="/var/www"
+fi
 
-    if [[ -d /var/www/fileadmin/_processed_ ]]; then
-        rm -rf /var/www/fileadmin/_processed_/* > /dev/null 2>&1
+echo "Cleaning up document root $DOCROOT"
+
+if [[ -d $DOCROOT/typo3temp ]]; then
+    echo "Removing TYPO3 CMS temp files"
+    find $DOCROOT/typo3temp -type f -exec rm -f {} \;
+    find $DOCROOT/typo3temp -type d -iname "_processed_" -exec rm -rf {} \; > /dev/null 2>&1
+
+    if [[ -d $DOCROOT/fileadmin/_processed_ ]]; then
+        rm -rf $DOCROOT/fileadmin/_processed_/* > /dev/null 2>&1
     fi
 fi
 
-if [[ -d /var/www/Data/Temporary ]]; then
+if [[ -d $DOCROOT/Data/Temporary ]]; then
     echo "Removing TYPO3 Flow temp files"
-    rm -rf /var/www/Data/Temporary/* > /dev/null 2>&1
+    rm -rf $DOCROOT/Data/Temporary/* > /dev/null 2>&1
 fi
 
 if [[ -d /var/www/var/cache ]]; then
     echo "Removing Magento temp files"
-    rm -rf /var/www/downloader/.cache/*
-    rm -rf /var/www/downloader/pearlib/cache/*
-    rm -rf /var/www/downloader/pearlib/download/*
-    rm -rf /var/www/var/cache/*
-    rm -rf /var/www/var/locks/*
-    rm -rf /var/www/var/log/*
-    rm -rf /var/www/var/report/*
-    rm -rf /var/www/var/session/*
-    rm -rf /var/www/var/tmp/*
+    rm -rf $DOCROOT/downloader/.cache/*
+    rm -rf $DOCROOT/downloader/pearlib/cache/*
+    rm -rf $DOCROOT/downloader/pearlib/download/*
+    rm -rf $DOCROOT/var/cache/*
+    rm -rf $DOCROOT/var/locks/*
+    rm -rf $DOCROOT/var/log/*
+    rm -rf $DOCROOT/var/report/*
+    rm -rf $DOCROOT/var/session/*
+    rm -rf $DOCROOT/var/tmp/*
 fi
 
 echo "Zeroing device to make space..."
