@@ -108,7 +108,15 @@ module VagrantPlugins
         FileUtils.mkdir_p(exported_path)
 
         @env.ui.info('Exporting machine')
-        @vm.provider.driver.export File.join(exported_path, 'box.ovf') do |progress|
+
+        provider_name = @vm.provider_name.to_s
+        ext = "ovf"
+
+        if /vmware/i =~ provider_name
+          ext = "vmx"
+        end
+
+        @vm.provider.driver.export File.join(exported_path, 'box.' + ext) do |progress|
           @env.ui.clear_line
           @env.ui.report_progress(progress.percent, 100, false)
         end
@@ -121,7 +129,7 @@ module VagrantPlugins
         # Add metadata json
         begin
           metadata = File.open(File.join(@tmp_path, 'metadata.json'), 'wb')
-          metadata.write('{"provider":"' + @vm.provider_name.to_s + '"}')
+          metadata.write('{"provider":"' + provider_name + '"}')
         ensure
           metadata.close
         end
