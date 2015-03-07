@@ -13,11 +13,6 @@ do
         mysql -u root $DB
 done
 
-echo "Reset vagrant authorized keys file"
-wget -q --no-check-certificate 'https://raw.github.com/mitchellh/vagrant/master/keys/vagrant.pub' -O '/tmp/auth_keys'
-cat /tmp/auth_keys >> /home/vagrant/.ssh/authorized_keys
-rm /tmp/auth_keys
-
 echo "Removing old kernel packages"
 apt-get -qq -y --purge remove $(dpkg --list | egrep '^rc' | awk '{print $2}')
 apt-get -qq -y --purge remove $(dpkg --list | egrep 'linux-(image(-extra)?|headers)-[0-9]' | awk '{print $3,$2}' | grep -v $(uname -r | sed -e s/-generic//g) | awk '{ print $2}')
@@ -79,5 +74,4 @@ rm -f /EMPTY
 echo "Sync to disc"
 sync
 
-echo "Exit happily"
 exit 0

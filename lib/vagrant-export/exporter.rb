@@ -95,6 +95,33 @@ module VagrantPlugins
         end
       end
 
+
+      # Add the private key if we have one
+      # Shamelessly stolen from Vagrant::Action::General::Package
+      def setup_private_key
+
+        # If we don't have a generated private key, we do nothing
+        path = @vm.data_dir.join('private_key')
+        return unless path.file?
+
+        # Copy it into our box directory
+        new_path = @tmp_path.join('vagrant_private_key')
+        FileUtils.cp(path, new_path)
+
+        # Append it to the Vagrantfile (or create a Vagrantfile)
+        vf_path = @tmp_path.join('Vagrantfile')
+        mode = 'w+'
+        mode = 'a' if vf_path.file?
+
+        vf_path.open(mode) do |f|
+          f.binmode
+          f.puts
+          f.puts %Q[Vagrant.configure("2") do |config|]
+          f.puts %Q[  config.ssh.private_key_path = File.expand_path("../vagrant_private_key", __FILE__)]
+          f.puts %Q[end]
+        end
+      end
+
       def export
         # Halt the machine
         if @vm.state.short_description == 'running'
@@ -177,6 +204,9 @@ module VagrantPlugins
             FileUtils.cp(original_vagrantfile, File.join(target_include_path, '_Vagrantfile'))
           end
         end
+
+        # Copy the private key if available
+        setup_private_key
 
         # Make a box file out of it
         @box_file_name = @tmp_path + '.box'
