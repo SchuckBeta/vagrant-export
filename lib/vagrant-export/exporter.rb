@@ -11,7 +11,7 @@ module VagrantPlugins
 
       # @param env Vagrant::Environment
       # @param logger Log4r::Logger
-      def initialize env, logger
+      def initialize(env, logger)
         @env = env
         @logger = logger
       end
@@ -137,21 +137,26 @@ module VagrantPlugins
         @env.ui.info('Exporting machine')
 
         provider_name = @vm.provider_name.to_s
-        ext = "ovf"
 
         if /vmware/i =~ provider_name
-          ext = "vmx"
-        end
-
-        @vm.provider.driver.export File.join(exported_path, 'box.' + ext) do |progress|
-          @env.ui.clear_line
-          @env.ui.report_progress(progress.percent, 100, false)
+          current_dir = File.dirname(@vm.id)
+          files = Dir.glob(File.join(current_dir, '**', '*')).select {|f|
+              !File.directory?(f)
+          }
+          FileUtils.cp_r(files, exported_path)
+        else
+          @vm.provider.driver.export File.join(exported_path, 'box.ovf' + ext) do |progress|
+            @env.ui.clear_line
+            @env.ui.report_progress(progress.percent, 100, false)
+          end
         end
 
         @logger.debug("Exported VM to #{exported_path}")
       end
 
       def files(bare)
+
+        provider_name = @vm.provider_name.to_s
 
         # Add metadata json
         begin
@@ -169,12 +174,13 @@ module VagrantPlugins
           FileUtils.cp_r(source_include_path, @tmp_path)
         end
 
-        original_vagrantfile = File.join(@vm.box.directory, 'Vagrantfile')
-        vagrantfile_exists   = File.exist?(original_vagrantfile)
-        vagrantfile_has_mac  = false
+        original_vagrantfile  = File.join(@vm.box.directory, 'Vagrantfile')
+        vagrantfile_exists    = File.exist?(original_vagrantfile)
+        vagrantfile_has_mac   = false
+        vagrantfile_needs_mac = @vm.provider_name.to_s == 'virtualbox'
 
         # Check the original vagrant file for a mac settings
-        if vagrantfile_exists
+        if vagrantfile_exists && vagrantfile_needs_mac
           File.readlines(original_vagrantfile).each { |line|
             if line.to_s =~ /base_mac\s*=\s*("|')/i
               vagrantfile_has_mac = true
@@ -183,7 +189,7 @@ module VagrantPlugins
         end
 
         # If it has one, just copy it
-        if vagrantfile_has_mac
+        if vagrantfile_has_mac || (!vagrantfile_needs_mac && vagrantfile_exists)
           FileUtils.cp(original_vagrantfile, File.join(@tmp_path, 'Vagrantfile'))
 
         # If none, create a new one that has the mac setting,
