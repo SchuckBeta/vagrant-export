@@ -140,9 +140,12 @@ module VagrantPlugins
 
         if /vmware/i =~ provider_name
           current_dir = File.dirname(@vm.id)
-          files = Dir.glob(File.join(current_dir, '**', '*')).select {|f|
-              !File.directory?(f)
-          }
+          files = Dir.glob(File.join(current_dir, '**', '*'))
+
+          files.select! {|f| !File.directory?(f) }
+          files.select!{ |f| v !~ /\.log$/ }
+          files.select!{ |f| v !~ /core$/ }
+
           FileUtils.cp_r(files, exported_path)
         else
           @vm.provider.driver.export File.join(exported_path, 'box.ovf' + ext) do |progress|
@@ -157,6 +160,13 @@ module VagrantPlugins
       def files(bare)
 
         provider_name = @vm.provider_name.to_s
+
+        # For Vmware, the remote provider is generic _desktop
+        # the local is a specific _fusion or _workstation
+        # Always use vmware_desktop to avoid problems with different provider plugins
+        if provider_name =~ /vmware/
+          provider_name = 'vmware_desktop'
+        end
 
         # Add metadata json
         begin
