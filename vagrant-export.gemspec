@@ -7,7 +7,7 @@ Gem::Specification.new do |g|
   g.version       = VagrantPlugins::Export::VERSION
   g.platform      = Gem::Platform::RUBY
   g.license       = 'MIT'
-  g.authors       = 'Georg Großberger'
+  g.authors       = 'Georg Grossberger'
   g.email         = 'contact@grossberger-ge.org'
   g.homepage      = 'https://github.com/trenker/vagrant-export'
   g.summary       = 'Export boxes to .box files including the original Vagrantfile and some cleanups inside the VM'
