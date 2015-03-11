@@ -105,15 +105,15 @@ module VagrantPlugins
         return unless path.file?
 
         # Copy it into our box directory
-        new_path = @tmp_path.join('vagrant_private_key')
+        new_path = File.join(@tmp_path, 'vagrant_private_key')
         FileUtils.cp(path, new_path)
 
         # Append it to the Vagrantfile (or create a Vagrantfile)
-        vf_path = @tmp_path.join('Vagrantfile')
+        vf_path = File.join(@tmp_path, 'Vagrantfile')
         mode = 'w+'
-        mode = 'a' if vf_path.file?
+        mode = 'a' if File.file?(vf_path)
 
-        vf_path.open(mode) do |f|
+        File.open(vf_path, mode) do |f|
           f.binmode
           f.puts
           f.puts %Q[Vagrant.configure("2") do |config|]
