@@ -216,7 +216,7 @@ module VagrantPlugins
         # and includes the original
         # The new Vagrantfile will include the old one, which
         # is put into the includeds directory
-        else
+        elsif vagrantfile_needs_mac
           File.open(File.join(@tmp_path, 'Vagrantfile'), 'wb') do |file|
             file.write(Vagrant::Util::TemplateRenderer.render('package_Vagrantfile', {
                 base_mac: @vm.provider.driver.read_mac_address
