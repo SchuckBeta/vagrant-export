@@ -28,7 +28,7 @@ module VagrantPlugins
           if can_compress
             compress
           else
-            @env.uid.error('Cannot compress this type of machine')
+            @vm.ui.error('Cannot compress this type of machine')
             return 1
           end
         end
@@ -48,7 +48,7 @@ module VagrantPlugins
         if @vm.state.short_description == 'running'
           @did_run = true
         else
-          @env.ui.info('Machine not running, bringing it up')
+          @vm.ui.info('Machine not running, bringing it up')
           @vm.action(:up)
         end
 
@@ -125,7 +125,7 @@ module VagrantPlugins
       def export
         # Halt the machine
         if @vm.state.short_description == 'running'
-          @env.ui.info('Halting VM for export')
+          @vm.ui.info('Halting VM for export')
           @vm.action(:halt)
         end
 
@@ -134,7 +134,7 @@ module VagrantPlugins
         @tmp_path = exported_path
         FileUtils.mkdir_p(exported_path)
 
-        @env.ui.info('Exporting machine')
+        @vm.ui.info('Exporting machine')
 
         provider_name = @vm.provider_name.to_s
 
@@ -150,7 +150,7 @@ module VagrantPlugins
 
           FileUtils.cp_r(files, exported_path)
 
-          @env.ui.info('Compacting Vmware virtual disks')
+          @vm.ui.info('Compacting Vmware virtual disks')
 
           Dir.glob(File.join(exported_path, '**', '*.vmdk')) { |f|
             Vagrant::Util::Subprocess.execute('vmware-vdiskmanager', '-d', f)
@@ -159,8 +159,8 @@ module VagrantPlugins
 
         else
           @vm.provider.driver.export File.join(exported_path, 'box.ovf' + ext) do |progress|
-            @env.ui.clear_line
-            @env.ui.report_progress(progress.percent, 100, false)
+            @vm.ui.clear_line
+            @vm.ui.report_progress(progress.percent, 100, false)
           end
         end
 
@@ -237,7 +237,7 @@ module VagrantPlugins
         # Make a box file out of it
         @box_file_name = @tmp_path + '.box'
 
-        @env.ui.info('Packaging box file')
+        @vm.ui.info('Packaging box file')
 
         Vagrant::Util::SafeChdir.safe_chdir(@tmp_path) do
           files = Dir.glob(File.join('.', '**', '*'))
@@ -253,7 +253,7 @@ module VagrantPlugins
           box_name = @vm.box.name.gsub('/', '_')
           @target_box = File.join(@env.cwd, box_name + '.box')
           FileUtils.mv(@box_file_name, @target_box)
-          @env.ui.info('Created ' + @target_box)
+          @vm.ui.info('Created ' + @target_box)
         end
 
         # Remove the tmp files
@@ -261,7 +261,7 @@ module VagrantPlugins
 
         # Resume the machine
         if @did_run
-          @env.ui.info('Bringing the machine back up')
+          @vm.ui.info('Bringing the machine back up')
           @vm.action(:up)
         end
       end
