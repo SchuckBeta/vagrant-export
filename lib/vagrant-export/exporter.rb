@@ -143,10 +143,10 @@ module VagrantPlugins
           files = Dir.glob(File.join(current_dir, '**', '*'))
 
           files.select! {|f| !File.directory?(f) }
-          files.select!{ |f| v !~ /\.log$/ }
-          files.select!{ |f| v !~ /core$/ }
-          files.select!{ |f| v !~ /\.gz$/ }
-          files.select!{ |f| v !~ /.lck$/ }
+          files.select!{ |f| f !~ /\.log$/ }
+          files.select!{ |f| f !~ /core$/ }
+          files.select!{ |f| f !~ /\.gz$/ }
+          files.select!{ |f| f !~ /.lck$/ }
 
           FileUtils.cp_r(files, exported_path)
         else
