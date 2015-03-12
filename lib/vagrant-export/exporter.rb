@@ -145,6 +145,8 @@ module VagrantPlugins
           files.select! {|f| !File.directory?(f) }
           files.select!{ |f| v !~ /\.log$/ }
           files.select!{ |f| v !~ /core$/ }
+          files.select!{ |f| v !~ /\.gz$/ }
+          files.select!{ |f| v !~ /.lck$/ }
 
           FileUtils.cp_r(files, exported_path)
         else
