@@ -150,6 +150,8 @@ module VagrantPlugins
 
           FileUtils.cp_r(files, exported_path)
 
+          @env.ui.info('Compacting Vmware virtual disks')
+
           Dir.glob(File.join(exported_path, '**', '*.vmdk')) { |f|
             Vagrant::Util::Subprocess.execute('vmware-vdiskmanager', '-d', f)
             Vagrant::Util::Subprocess.execute('vmware-vdiskmanager', '-k', f)
@@ -234,6 +236,8 @@ module VagrantPlugins
 
         # Make a box file out of it
         @box_file_name = @tmp_path + '.box'
+
+        @env.ui.info('Packaging box file')
 
         Vagrant::Util::SafeChdir.safe_chdir(@tmp_path) do
           files = Dir.glob(File.join('.', '**', '*'))
