@@ -149,6 +149,12 @@ module VagrantPlugins
           files.select!{ |f| f !~ /.lck$/ }
 
           FileUtils.cp_r(files, exported_path)
+
+          Dir.glob(File.join(exported_path, '**', '*.vmdk')) { |f|
+            Vagrant::Util::Subprocess.execute('vmware-vdiskmanager', '-d', f)
+            Vagrant::Util::Subprocess.execute('vmware-vdiskmanager', '-k', f)
+          }
+
         else
           @vm.provider.driver.export File.join(exported_path, 'box.ovf' + ext) do |progress|
             @env.ui.clear_line
