@@ -135,7 +135,6 @@ module VagrantPlugins
           @logger.debug('No Vagrantfile found, create one')
         end
 
-
         File.open(vf_path, mode) do |f|
           f.binmode
           f.puts
