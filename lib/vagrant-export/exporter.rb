@@ -111,7 +111,29 @@ module VagrantPlugins
         # Append it to the Vagrantfile (or create a Vagrantfile)
         vf_path = File.join(@tmp_path, 'Vagrantfile')
         mode = 'w+'
-        mode = 'a' if File.file?(vf_path)
+
+        @logger.debug("Check and add private_key_path setting to #{vf_path}")
+
+        if File.file?(vf_path)
+          mode = 'a'
+          has_private_key_path = false
+
+          @logger.debug('Vagrantfile exists, check for private_key_path')
+
+          File.readlines(vf_path).each { |line|
+            if line.to_s =~ /ssh\.private_key_path/i
+              has_private_key_path = true
+            end
+          }
+
+          if has_private_key_path
+            @logger.debug('Existing Vagrantfile already has a private_key_path setting')
+            return
+          end
+        else
+          @logger.debug('No Vagrantfile found, create one')
+        end
+
 
         File.open(vf_path, mode) do |f|
           f.binmode
