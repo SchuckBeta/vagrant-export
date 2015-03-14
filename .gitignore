@@ -1,4 +1,5 @@
 /.idea
 /.vagrant
 /Gemfile.lock
-Vagrantfile
+/Vagrantfile
+/*.gem
