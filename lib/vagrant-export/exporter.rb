@@ -106,6 +106,7 @@ module VagrantPlugins
 
         # Copy it into our box directory
         new_path = File.join(@tmp_path, 'vagrant_private_key')
+        @logger.debug("Copy private key from #{path} to #{new_path}")
         FileUtils.cp(path, new_path)
 
         # Append it to the Vagrantfile (or create a Vagrantfile)
@@ -161,8 +162,13 @@ module VagrantPlugins
         provider_name = @vm.provider_name.to_s
 
         if /vmware/i =~ provider_name
+
+          @logger.debug("Using vmware method for provider #{provider_name}")
+
           current_dir = File.dirname(@vm.id)
           files = Dir.glob(File.join(current_dir, '**', '*'))
+
+          @logger.debug("Files found in #{current_dir}: #{files}")
 
           files.select! {|f| !File.directory?(f) }
           files.select!{ |f| f !~ /\.log$/ }
@@ -170,12 +176,18 @@ module VagrantPlugins
           files.select!{ |f| f !~ /\.gz$/ }
           files.select!{ |f| f !~ /.lck$/ }
 
+          @logger.debug("Copying #{files} to #{exported_path}")
+
           FileUtils.cp_r(files, exported_path)
 
           @vm.ui.info('Compacting Vmware virtual disks')
 
           Dir.glob(File.join(exported_path, '**', '*.vmdk')) { |f|
+
+            @logger.debug("Running 'vmware-vdiskmanager -d #{f}'")
             Vagrant::Util::Subprocess.execute('vmware-vdiskmanager', '-d', f)
+
+            @logger.debug("Running 'vmware-vdiskmanager -k #{f}'")
             Vagrant::Util::Subprocess.execute('vmware-vdiskmanager', '-k', f)
           }
 
@@ -193,11 +205,14 @@ module VagrantPlugins
 
         provider_name = @vm.provider_name.to_s
 
+        @logger.debug("Provider identified as #{provider_name}")
+
         # For Vmware, the remote provider is generic _desktop
         # the local is a specific _fusion or _workstation
         # Always use vmware_desktop to avoid problems with different provider plugins
         if provider_name =~ /vmware/
           provider_name = 'vmware_desktop'
+          @logger.debug("Forcing provider name #{provider_name}")
         end
 
         # Add metadata json
@@ -213,6 +228,7 @@ module VagrantPlugins
 
         # Copy includes
         if Dir.exist?(source_include_path) && !bare
+          @logger.debug("Copy includes from #{source_include_path} to #{target_include_path}")
           FileUtils.cp_r(source_include_path, @tmp_path)
         end
 
@@ -223,6 +239,7 @@ module VagrantPlugins
 
         # Check the original vagrant file for a mac settings
         if vagrantfile_exists && vagrantfile_needs_mac
+          @logger.debug('Provider needs a hmac setting in the Vagrantfile')
           File.readlines(original_vagrantfile).each { |line|
             if line.to_s =~ /base_mac\s*=\s*("|')/i
               vagrantfile_has_mac = true
@@ -232,6 +249,7 @@ module VagrantPlugins
 
         # If it has one, just copy it
         if vagrantfile_has_mac || (!vagrantfile_needs_mac && vagrantfile_exists)
+          @logger.debug('Box has already a hmac in its Vagrantfile, copy existing')
           FileUtils.cp(original_vagrantfile, File.join(@tmp_path, 'Vagrantfile'))
 
         # If none, create a new one that has the mac setting,
@@ -239,6 +257,7 @@ module VagrantPlugins
         # The new Vagrantfile will include the old one, which
         # is put into the includeds directory
         elsif vagrantfile_needs_mac
+          @logger.debug('Vagrantfile has no hmac, set one ourselves')
           File.open(File.join(@tmp_path, 'Vagrantfile'), 'wb') do |file|
             file.write(Vagrant::Util::TemplateRenderer.render('package_Vagrantfile', {
                 base_mac: @vm.provider.driver.read_mac_address
@@ -248,8 +267,10 @@ module VagrantPlugins
           # If there is a Vagrantfile, but without a mac
           # ensure it is included
           if vagrantfile_exists
+            included_vagrantfile = File.join(target_include_path, '_Vagrantfile')
+            @logger.debug("Box already has a Vagrantfile, copy it from #{original_vagrantfile} to #{included_vagrantfile}")
             FileUtils.mkdir_p(target_include_path) unless Dir.exist?(target_include_path)
-            FileUtils.cp(original_vagrantfile, File.join(target_include_path, '_Vagrantfile'))
+            FileUtils.cp(original_vagrantfile, included_vagrantfile)
           end
         end
 
@@ -263,6 +284,7 @@ module VagrantPlugins
 
         Vagrant::Util::SafeChdir.safe_chdir(@tmp_path) do
           files = Dir.glob(File.join('.', '**', '*'))
+          @logger.debug("Create box file #{@box_file_name} containing #{files}")
           Vagrant::Util::Subprocess.execute('bsdtar', '-czf', @box_file_name, *files)
         end
 
