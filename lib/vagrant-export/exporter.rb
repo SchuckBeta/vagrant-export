@@ -192,7 +192,7 @@ module VagrantPlugins
           }
 
         else
-          @vm.provider.driver.export File.join(exported_path, 'box.ovf' + ext) do |progress|
+          @vm.provider.driver.export File.join(exported_path, 'box.ovf') do |progress|
             @vm.ui.clear_line
             @vm.ui.report_progress(progress.percent, 100, false)
           end
