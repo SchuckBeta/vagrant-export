@@ -304,9 +304,41 @@ module VagrantPlugins
         @vm.ui.info('Packaging box file')
 
         Vagrant::Util::SafeChdir.safe_chdir(@tmp_path) do
+
           files = Dir.glob(File.join('.', '**', '*'))
           @logger.debug("Create box file #{@box_file_name} containing #{files}")
-          Vagrant::Util::Subprocess.execute('bsdtar', '-czf', @box_file_name, *files)
+
+          if Vagrant::Util::Which.which('pv') != nil && Vagrant::Util::Which.which('tar') && Vagrant::Util::Which.which('gzip')
+            total_size = 0
+
+            logger.debug('Using custom packaging command to create progress output')
+            @env.ui.info('Starting compression')
+
+            files.each { |f|
+              total_size += File.size(f)
+            }
+
+            @logger.debug("Complete size of files is #{total_size} bytes")
+
+            opts = {}
+            opts[:notify] = [:stderr, :stdout]
+
+            Vagrant::Util::Subprocess.execute('tar cf -', *files, '| pv -p -s ', total_size, ' | gzip -c > ', @box_file_name) { |io, data|
+              d = data.to_s
+
+              if io == :stdout
+                @logger.debug(d)
+              else
+                @env.ui.clear_line
+                @env.ui.info(d)
+              end
+            }
+
+            @env.ui.clear_line
+
+          else
+            Vagrant::Util::Subprocess.execute('bsdtar', '-czf', @box_file_name, *files)
+          end
         end
 
         0
