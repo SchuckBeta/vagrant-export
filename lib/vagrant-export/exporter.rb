@@ -326,8 +326,8 @@ module VagrantPlugins
             Vagrant::Util::Subprocess.execute('tar cf -', *files, '| pv -p -s ', total_size, ' | gzip -c > ', @box_file_name) { |io, data|
               d = data.to_s
 
-              if io == :stdout
-                @logger.debug(d)
+              if io == :stderr
+                @logger.error(d)
               else
                 @env.ui.clear_line
                 @env.ui.info(d)
