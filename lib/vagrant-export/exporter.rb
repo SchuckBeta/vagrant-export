@@ -4,6 +4,7 @@
 #                                                                       #
 
 require 'fileutils'
+require_relative 'error'
 
 module VagrantPlugins
   module Export
@@ -191,12 +192,33 @@ module VagrantPlugins
           }
 
         else
-          @vm.provider.driver.export File.join(exported_path, 'box.ovf') do |progress|
-            @vm.ui.clear_line
-            @vm.ui.report_progress(progress.percent, 100, false)
-          end
+
+          ovf_file = File.join(exported_path, @vm.box.name.gsub(/[^a-zA-Z0-9]+/, '_')) + '.ovf'
+          vm_id = @vm.id.to_s
+
+          opts = {}
+          opts[:notify] = [:stdout, :stderr]
+
+          @logger.debug("Export #{vm_id} to #{ovf_file}")
+
+          Vagrant::Util::Subprocess.execute('VBoxManage', 'export', vm_id, '-o', ovf_file, opts) { |io, data|
+
+            d = data.to_s
+
+            if io == :stdout
+              @logger.debug(d)
+            else
+              if /\d+%/ =~ d
+                @env.ui.info(d, new_line: false)
+              else
+                @logger.error(d)
+                raise VirtualboxExportError
+              end
+            end
+          }
         end
 
+        @env.ui.clear_line
         @logger.debug("Exported VM to #{exported_path}")
       end
 
