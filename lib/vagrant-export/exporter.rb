@@ -23,32 +23,39 @@ module VagrantPlugins
       # @param bare Boolean
       # @return string
       def handle(fast, bare)
-        @did_run = false
+        @did_run     = false
         @private_key = nil
+        @tmp_path    = nil
+        @box_file_name = nil
 
         if @vm.state.short_description == 'not created'
           raise VagrantPlugins::Export::NotCreated
         end
 
-        ssh_info = vm.ssh_info
-        unless ssh_info == nil
-          @private_key = ssh_info[:private_key_path]
-        end
-
-        unless fast
-          if can_compress
-            compress
-          else
-            @vm.ui.error('Cannot compress this type of machine')
-            return 1
+        begin
+          ssh_info = vm.ssh_info
+          unless ssh_info == nil
+            @private_key = ssh_info[:private_key_path]
           end
+
+          unless fast
+            if can_compress
+              compress
+            else
+              @vm.ui.error('Cannot compress this type of machine')
+              return 1
+            end
+          end
+
+          return 1 unless export
+          return 1 unless files(bare)
+
+          finalize
+        ensure
+          FileUtils.rm_rf(@tmp_path) if Dir.exists?(@tmp_path)
+          FileUtils.rm_rf(@box_file_name) if File.file?(@box_file_name)
         end
-
-        return 1 unless export
-        return 1 unless files(bare)
-
-        finalize
-
+        target_box
       end
 
       def target_box
@@ -378,9 +385,6 @@ module VagrantPlugins
           FileUtils.mv(@box_file_name, target)
           @vm.ui.info('Created ' + target)
         end
-
-        # Remove the tmp files
-        FileUtils.rm_rf(@tmp_path)
 
         # Resume the machine
         if @did_run
