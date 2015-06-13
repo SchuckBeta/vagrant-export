@@ -12,17 +12,17 @@ module VagrantPlugins
 
       # @param env Vagrant::Environment
       # @param logger Log4r::Logger
-      def initialize(env, logger)
+      # @param vm Vagrant::Machine
+      def initialize(env, logger, vm)
+        @vm = vm
         @env = env
         @logger = logger
       end
 
-      # @param vm Vagrant::Machine
       # @param fast Boolean
       # @param bare Boolean
       # @return string
-      def handle(vm, fast, bare)
-        @vm = vm
+      def handle(fast, bare)
         @did_run = false
         @private_key = nil
 
@@ -45,7 +45,11 @@ module VagrantPlugins
 
         finalize
 
-        @target_box
+      end
+
+      def target_box
+        box_name = @vm.box.name.gsub('/', '_')
+        File.join(@env.cwd, box_name + '.box')
       end
 
       protected
@@ -366,10 +370,9 @@ module VagrantPlugins
       def finalize
         # Rename the box file
         if File.exist?(@box_file_name)
-          box_name = @vm.box.name.gsub('/', '_')
-          @target_box = File.join(@env.cwd, box_name + '.box')
-          FileUtils.mv(@box_file_name, @target_box)
-          @vm.ui.info('Created ' + @target_box)
+          target = target_box
+          FileUtils.mv(@box_file_name, target)
+          @vm.ui.info('Created ' + target)
         end
 
         # Remove the tmp files
