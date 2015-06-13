@@ -44,7 +44,6 @@ module VagrantPlugins
 
       protected
 
-
       def can_compress
         if @vm.state.short_description == 'running'
           @did_run = true
@@ -200,15 +199,16 @@ module VagrantPlugins
           opts[:notify] = [:stdout, :stderr]
 
           @logger.debug("Export #{vm_id} to #{ovf_file}")
+          @env.ui.info('0%', new_line: false)
 
           Vagrant::Util::Subprocess.execute('VBoxManage', 'export', vm_id, '-o', ovf_file, opts) { |io, data|
 
             d = data.to_s
+            @logger.debug(d)
 
-            if io == :stdout
-              @logger.debug(d)
-            else
+            unless io == :stdout
               if /\d+%/ =~ d
+                @env.ui.clear_line
                 @env.ui.info(d, new_line: false)
               else
                 @logger.error(d)
@@ -323,7 +323,7 @@ module VagrantPlugins
             opts = {}
             opts[:notify] = [:stderr, :stdout]
 
-            Vagrant::Util::Subprocess.execute('tar cf -', *files, '| pv -p -s ', total_size, ' | gzip -c > ', @box_file_name) { |io, data|
+            Vagrant::Util::Subprocess.execute('tar cf - ', *files, '| pv -p -s ', total_size, ' | gzip -c > ', @box_file_name) { |io, data|
               d = data.to_s
 
               if io == :stderr
