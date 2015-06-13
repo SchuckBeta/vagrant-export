@@ -8,5 +8,8 @@ module VagrantPlugins
     class VirtualboxExportError < Vagrant::Errors::VagrantError
       error_message('Cannot export Virtualbox machine to appliance')
     end
+    class BoxAlreadyExists < Vagrant::Errors::VagrantError
+      error_message('A box file for this machine already exists')
+    end
   end
 end

@@ -33,10 +33,16 @@ module VagrantPlugins
         return 1 unless argv
 
         require_relative 'exporter'
-        ex = Exporter.new(@env, @logger)
 
         with_target_vms argv, reverse: true do |machine|
-          ex.handle(machine, options[:fast], options[:bare])
+          ex = Exporter.new(@env, @logger, machine)
+
+          if File.file?(ex.target_box)
+            require_relative 'error'
+            raise BoxAlreadyExists
+          end
+
+          ex.handle(options[:fast], options[:bare])
         end
         0
       end
