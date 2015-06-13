@@ -106,7 +106,7 @@ module VagrantPlugins
         return unless path.file?
 
         # Copy it into our box directory
-        new_path = File.join(@tmp_path, 'vagrant_private_key')
+        new_path = File.join(@tmp_path, 'private_key')
         @logger.debug("Copy private key from #{path} to #{new_path}")
         FileUtils.cp(path, new_path)
 
@@ -140,7 +140,7 @@ module VagrantPlugins
           f.binmode
           f.puts
           f.puts %Q[Vagrant.configure("2") do |config|]
-          f.puts %Q[  config.ssh.private_key_path = File.expand_path("../vagrant_private_key", __FILE__)]
+          f.puts %Q[  config.ssh.private_key_path = File.expand_path("../private_key", __FILE__)]
           f.puts %Q[end]
         end
       end
