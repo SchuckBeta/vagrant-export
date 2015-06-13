@@ -26,6 +26,10 @@ module VagrantPlugins
         @did_run = false
         @private_key = nil
 
+        if @vm.state.short_description == 'not created'
+          raise VagrantPlugins::Export::NotCreated
+        end
+
         ssh_info = vm.ssh_info
         unless ssh_info == nil
           @private_key = ssh_info[:private_key_path]

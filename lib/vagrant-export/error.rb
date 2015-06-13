@@ -11,5 +11,8 @@ module VagrantPlugins
     class BoxAlreadyExists < Vagrant::Errors::VagrantError
       error_message('A box file for this machine already exists')
     end
+    class NotCreated < Vagrant::Errors::VagrantError
+      error_message('Cannot export a not created machine. Please make at least one vagrant up')
+    end
   end
 end
