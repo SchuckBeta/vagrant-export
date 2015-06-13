@@ -342,14 +342,14 @@ module VagrantPlugins
             opts = {}
             opts[:notify] = [:stderr, :stdout]
 
-            Vagrant::Util::Subprocess.execute('tar cf - ', *files, '| pv -p -s ', total_size, ' | gzip -c > ', @box_file_name) { |io, data|
+            Vagrant::Util::Subprocess.execute('tar', ' -cf - ', *files, ' | pv -n -s ', total_size, ' | gzip -c > ', @box_file_name) { |io, data|
               d = data.to_s
 
               if io == :stderr
                 @logger.error(d)
               else
                 @env.ui.clear_line
-                @env.ui.info(d)
+                @env.ui.info(d.match(/\d+/).to_a.pop.to_s + '%')
               end
             }
 
