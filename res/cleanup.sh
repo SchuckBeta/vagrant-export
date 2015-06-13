@@ -15,7 +15,7 @@ done
 
 echo "Removing old kernel packages"
 apt-get -qq -y --purge remove $(dpkg --list | egrep '^rc' | awk '{print $2}')
-apt-get -qq -y --purge remove $(dpkg --list | egrep 'linux-(image(-extra)?|headers)-[0-9]' | awk '{print $3,$2}' | grep -v $(uname -r | sed -e s/-generic//g) | awk '{ print $2}')
+apt-get -qq -y --purge remove $(dpkg --list | egrep '^i' | egrep 'linux-(image(-extra)?|headers)-[0-9]' | awk '{print $3,$2}' | grep -v $(uname -r | sed -e s/-generic//g) | awk '{print $2}')
 
 echo "Cleaning up apt"
 apt-get -qq -y --purge autoremove
@@ -27,6 +27,7 @@ echo "Cleaning up home"
 rm -rf $HOME/.cache
 rm -rf $HOME/.local
 rm -rf $HOME/.npm
+rm -rf $HOME/.composer
 rm -rf $HOME/tmp
 
 if [[ -d /www ]]; then
@@ -37,41 +38,39 @@ else
     DOCROOT="/var/www"
 fi
 
-echo "Cleaning up document root $DOCROOT"
+echo "Cleaning up document root ${DOCROOT}"
 
-if [[ -d $DOCROOT/typo3temp ]]; then
+if [[ -d ${DOCROOT}/typo3temp ]]; then
     echo "Removing TYPO3 CMS temp files"
-    find $DOCROOT/typo3temp -type f -exec rm -f {} \;
-    find $DOCROOT/typo3temp -type d -iname "_processed_" -exec rm -rf {} \; > /dev/null 2>&1
+    find ${DOCROOT}/typo3temp -type f -exec rm -f {} \;
 
-    if [[ -d $DOCROOT/fileadmin/_processed_ ]]; then
-        rm -rf $DOCROOT/fileadmin/_processed_/* > /dev/null 2>&1
+    if [[ -d ${DOCROOT}/fileadmin/_processed_ ]]; then
+        rm -rf ${DOCROOT}/fileadmin/_processed_/* > /dev/null 2>&1
     fi
 fi
 
-if [[ -d $DOCROOT/Data/Temporary ]]; then
+if [[ -d ${DOCROOT}/Data/Temporary ]]; then
     echo "Removing TYPO3 Flow temp files"
-    rm -rf $DOCROOT/Data/Temporary/* > /dev/null 2>&1
+    rm -rf ${DOCROOT}/Data/Temporary/* > /dev/null 2>&1
 fi
 
 if [[ -d /var/www/var/cache ]]; then
     echo "Removing Magento temp files"
-    rm -rf $DOCROOT/downloader/.cache/*
-    rm -rf $DOCROOT/downloader/pearlib/cache/*
-    rm -rf $DOCROOT/downloader/pearlib/download/*
-    rm -rf $DOCROOT/var/cache/*
-    rm -rf $DOCROOT/var/locks/*
-    rm -rf $DOCROOT/var/log/*
-    rm -rf $DOCROOT/var/report/*
-    rm -rf $DOCROOT/var/session/*
-    rm -rf $DOCROOT/var/tmp/*
+    rm -rf ${DOCROOT}/downloader/.cache/*
+    rm -rf ${DOCROOT}/downloader/pearlib/cache/*
+    rm -rf ${DOCROOT}/downloader/pearlib/download/*
+    rm -rf ${DOCROOT}/var/cache/*
+    rm -rf ${DOCROOT}/var/locks/*
+    rm -rf ${DOCROOT}/var/log/*
+    rm -rf ${DOCROOT}/var/report/*
+    rm -rf ${DOCROOT}/var/session/*
+    rm -rf ${DOCROOT}/var/tmp/*
 fi
 
 echo "Zeroing device to make space..."
-dd if=/dev/zero of=/EMPTY bs=1M  > /dev/null 2>&1
+dd if=/dev/zero of=/EMPTY bs=1M > /dev/null 2>&1
+sync
 rm -f /EMPTY
-
-echo "Sync to disc"
 sync
 
 exit 0
