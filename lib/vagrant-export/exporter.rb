@@ -209,7 +209,7 @@ module VagrantPlugins
             unless io == :stdout
               if /\d+%/ =~ d
                 @env.ui.clear_line
-                @env.ui.info(d, new_line: false)
+                @env.ui.info(d.match(/\d+%/).to_a.pop, new_line: false)
               else
                 @logger.error(d)
                 raise VirtualboxExportError
