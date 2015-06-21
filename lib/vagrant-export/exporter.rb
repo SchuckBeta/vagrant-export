@@ -341,8 +341,9 @@ module VagrantPlugins
 
           files = Dir.glob(File.join('.', '**', '*'))
           @logger.debug("Create box file #{@box_file_name} containing #{files}")
+          bash_exec = Vagrant::Util::Which.which('bash');
 
-          if Vagrant::Util::Which.which('pv') != nil && Vagrant::Util::Which.which('tar') && Vagrant::Util::Which.which('gzip')
+          if File.executable?(bash_exec) && Vagrant::Util::Which.which('pv') != nil && Vagrant::Util::Which.which('tar') && Vagrant::Util::Which.which('gzip')
             total_size = 0
 
             @logger.debug('Using custom packaging command to create progress output')
@@ -357,7 +358,9 @@ module VagrantPlugins
             opts = {}
             opts[:notify] = [:stderr, :stdout]
 
-            Vagrant::Util::Subprocess.execute('tar', ' -cf - ', *files, ' | pv -n -s ', total_size, ' | gzip -c > ', @box_file_name) { |io, data|
+            script_file = File.absolute_path(File.expand_path('../../../res/progress_tar.sh', __FILE__))
+
+            Vagrant::Util::Subprocess.execute(bash_exec, script_file, @tmp_path.to_s, total_size.to_s, @box_file_name, opts) { |io, data|
               d = data.to_s
 
               if io == :stderr
