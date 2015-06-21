@@ -132,7 +132,7 @@ module VagrantPlugins
 
         # Use a different generated key if configured
         if @private_key != nil
-          path = File.new(@private_key.to_s, 'r') unless @private_key == Vagrant.source_root.join('keys', 'vagrant')
+          path = @private_key.to_s
         end
 
         # If we don't have a generated private key, we do nothing
