@@ -14,5 +14,8 @@ module VagrantPlugins
     class NotCreated < Vagrant::Errors::VagrantError
       error_message('Cannot export a not created machine. Please make at least one vagrant up')
     end
+    class TarFailed < Vagrant::Errors::VagrantError
+      error_message('Error during creating the box file')
+    end
   end
 end

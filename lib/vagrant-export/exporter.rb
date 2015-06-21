@@ -375,6 +375,8 @@ module VagrantPlugins
           end
         end
 
+        raise TarFailed unless File.file?(@box_file_name)
+
         0
       end
 
