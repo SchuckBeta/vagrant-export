@@ -52,14 +52,14 @@ module VagrantPlugins
 
           finalize
         ensure
-          FileUtils.rm_rf(@tmp_path) if Dir.exists?(@tmp_path)
-          FileUtils.rm_rf(@box_file_name) if File.file?(@box_file_name)
+          FileUtils.rm_rf(@tmp_path) if @tmp_path != nil && Dir.exists?(@tmp_path)
+          FileUtils.rm_rf(@box_file_name) if @box_file_name != nil &&  File.file?(@box_file_name)
         end
         target_box
       end
 
       def target_box
-        box_name = @vm.box.name.gsub('/', '_')
+        box_name = @vm.box.name.gsub(/[^a-z0-9\-]+/, '_')
         File.join(@env.cwd, box_name + '.box')
       end
 
