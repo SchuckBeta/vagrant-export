@@ -362,13 +362,15 @@ module VagrantPlugins
 
             Vagrant::Util::Subprocess.execute(bash_exec, script_file, @tmp_path.to_s, total_size.to_s, @box_file_name, opts) { |io, data|
               d = data.to_s
+              p = d.match(/\d+/).to_a
 
-              if io == :stderr
-                @logger.error(d)
-              else
+              @logger.debug(io + ': ' + d)
+
+              if p.length > 0
                 @env.ui.clear_line
-                @env.ui.info(d.match(/\d+/).to_a.pop.to_s + '%')
+                @env.ui.info(p.pop.to_s + '%')
               end
+
             }
 
             @env.ui.clear_line
