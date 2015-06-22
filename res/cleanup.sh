@@ -67,7 +67,7 @@ if [[ -d /var/www/var/cache ]]; then
     rm -rf ${DOCROOT}/var/tmp/*
 fi
 
-echo "Zeroing device to make space..."
+echo "Zeroing device to make space"
 dd if=/dev/zero of=/EMPTY bs=1M > /dev/null 2>&1
 sync
 rm -f /EMPTY
