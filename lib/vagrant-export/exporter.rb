@@ -186,7 +186,7 @@ module VagrantPlugins
         end
 
         # Export to file
-        exported_path = File.join(@env.tmp_path, Time.now.to_i.to_s)
+        exported_path = File.join(@env.tmp_path, 'export-' + Time.now.strftime('%Y%m%d%H%M%S'))
         @tmp_path = exported_path
         FileUtils.mkdir_p(exported_path)
 
@@ -271,11 +271,8 @@ module VagrantPlugins
         end
 
         # Add metadata json
-        begin
-          metadata = File.open(File.join(@tmp_path, 'metadata.json'), 'wb')
-          metadata.write('{"provider":"' + provider_name + '"}')
-        ensure
-          metadata.close
+        File.open(File.join(@tmp_path, 'metadata.json'), 'wb') do |f|
+          f.write('{"provider":"' + provider_name + '"}')
         end
 
         target_include_path = File.join(@tmp_path, 'include')
