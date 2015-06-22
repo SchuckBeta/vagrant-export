@@ -339,18 +339,20 @@ module VagrantPlugins
 
         Vagrant::Util::SafeChdir.safe_chdir(@tmp_path) do
 
-          files = Dir.glob(File.join('.', '**', '*'))
+          files = Dir.glob(File.join(@tmp_path, '**', '*'))
           @logger.debug("Create box file #{@box_file_name} containing #{files}")
           bash_exec = Vagrant::Util::Which.which('bash').to_s;
 
-          if File.executable?(bash_exec) && Vagrant::Util::Which.which('pv') != nil && Vagrant::Util::Which.which('tar') && Vagrant::Util::Which.which('gzip')
+          if File.executable?(bash_exec) && ['pv', 'tar', 'gzip'].all? {|cmd| Vagrant::Util::Which.which(cmd) != nil }
             total_size = 0
+            files_list = []
 
             @logger.debug('Using custom packaging command to create progress output')
             @env.ui.info('Starting compression', new_line: false)
 
             files.each { |f|
               total_size += File.size(f)
+              files_list.push(f.to_s.gsub(@tmp_path.to_s, '').gsub(/^[\/\\]+/, ''))
             }
 
             @logger.debug("Complete size of files is #{total_size} bytes")
@@ -359,8 +361,11 @@ module VagrantPlugins
             opts[:notify] = [:stderr, :stdout]
 
             script_file = File.absolute_path(File.expand_path('../../../res/progress_tar.sh', __FILE__))
+            files_list  = files_list.join(' ')
 
-            Vagrant::Util::Subprocess.execute(bash_exec, script_file, @tmp_path.to_s, total_size.to_s, @box_file_name, opts) { |io, data|
+            @logger.debug("Files argument for bash script: #{files_list}")
+
+            Vagrant::Util::Subprocess.execute(bash_exec, script_file, @tmp_path.to_s, total_size.to_s, @box_file_name, files_list, opts) { |io, data|
               d = data.to_s
               p = d.match(/\d+/).to_a
 
