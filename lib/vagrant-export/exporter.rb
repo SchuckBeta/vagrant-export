@@ -364,7 +364,7 @@ module VagrantPlugins
               d = data.to_s
               p = d.match(/\d+/).to_a
 
-              @logger.debug(io + ': ' + d)
+              @logger.debug(io.to_s + ': ' + d)
 
               if p.length > 0
                 @env.ui.clear_line
