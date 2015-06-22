@@ -341,7 +341,7 @@ module VagrantPlugins
 
           files = Dir.glob(File.join('.', '**', '*'))
           @logger.debug("Create box file #{@box_file_name} containing #{files}")
-          bash_exec = Vagrant::Util::Which.which('bash');
+          bash_exec = Vagrant::Util::Which.which('bash').to_s;
 
           if File.executable?(bash_exec) && Vagrant::Util::Which.which('pv') != nil && Vagrant::Util::Which.which('tar') && Vagrant::Util::Which.which('gzip')
             total_size = 0
