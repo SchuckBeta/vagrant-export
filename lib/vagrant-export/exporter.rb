@@ -347,7 +347,7 @@ module VagrantPlugins
             total_size = 0
 
             @logger.debug('Using custom packaging command to create progress output')
-            @env.ui.info('Starting compression')
+            @env.ui.info('Starting compression', new_line: false)
 
             files.each { |f|
               total_size += File.size(f)
@@ -368,7 +368,7 @@ module VagrantPlugins
 
               if p.length > 0
                 @env.ui.clear_line
-                @env.ui.info(p.pop.to_s + '%')
+                @env.ui.info(p.pop.to_s + '%', new_line: false)
               end
 
             }
