@@ -23,9 +23,8 @@ module VagrantPlugins
       # @param bare Boolean
       # @return string
       def handle(fast, bare)
-        @did_run     = false
-        @private_key = nil
-        @tmp_path    = nil
+        @private_key   = nil
+        @tmp_path      = nil
         @box_file_name = nil
 
         if @vm.state.short_description == 'not created'
@@ -66,9 +65,7 @@ module VagrantPlugins
       protected
 
       def can_compress
-        if @vm.state.short_description == 'running'
-          @did_run = true
-        else
+        unless @vm.state.short_description == 'running'
           @vm.ui.info('Machine not running, bringing it up')
           @vm.action(:up)
         end
@@ -327,12 +324,6 @@ module VagrantPlugins
           target = target_box
           FileUtils.mv(@box_file_name, target)
           @vm.ui.info('Created ' + target)
-        end
-
-        # Resume the machine
-        if @did_run
-          @vm.ui.info('Bringing the machine back up')
-          @vm.action(:up)
         end
       end
     end
