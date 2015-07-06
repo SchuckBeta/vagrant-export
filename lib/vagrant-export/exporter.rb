@@ -223,7 +223,7 @@ module VagrantPlugins
         additional_files.select! { |f| !File.directory?(f) }
         additional_files.select! { |f| f !~ /(gz|core|lck|log|vmdk|ovf|ova)$/ }
         additional_files.select! { |f| f !~ /(nvram|vmem|vmsd|vmsn|vmss|vmtm|vmx|vmxf)$/ }
-        additional_files.select! { |f| !File.exists(f.gsub(@vm.box.directory, @tmp_path)) }
+        additional_files.select! { |f| !File.file?(f.gsub(@vm.box.directory.to_s, @tmp_path.to_s)) }
 
         @logger.debug("Copy includes #{additional_files} to #{@tmp_path}")
         FileUtils.cp_r(additional_files, @tmp_path)
