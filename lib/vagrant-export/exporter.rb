@@ -246,7 +246,7 @@ module VagrantPlugins
 
             @logger.debug("Found HMAC setting in file #{vagrantfile_name.to_s}")
 
-            vagrantfile_name.open(mode) { |f|
+            File.open(vagrantfile_name.to_s, mode) { |f|
               hmac_address = @vm.provider.driver.read_mac_address
               f.binmode
               f.puts
