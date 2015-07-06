@@ -216,8 +216,9 @@ module VagrantPlugins
         # Copy additional files
         additional_files = Dir.glob(File.join(@vm.box.directory, '**', '*'))
         additional_files.select! { |f| !File.directory?(f) }
-        additional_files.select! { |f| f !~ /(tar|gz|core|lck|log|vmdk|ovf|ova)$/ }
+        additional_files.select! { |f| f !~ /(gz|core|lck|log|vmdk|ovf|ova)$/ }
         additional_files.select! { |f| f !~ /(nvram|vmem|vmsd|vmsn|vmss|vmtm|vmx|vmxf)$/ }
+        additional_files.select! { |f| !File.exists(f.gsub(@vm.box.directory, @tmp_path)) }
 
         @logger.debug("Copy includes #{additional_files} to #{@tmp_path}")
         FileUtils.cp_r(additional_files, @tmp_path)
