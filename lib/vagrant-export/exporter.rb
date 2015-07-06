@@ -140,16 +140,16 @@ module VagrantPlugins
           @logger.debug("Using vmware method for provider #{provider_name}")
 
           current_dir = File.dirname(@vm.id)
-          files = Dir.glob(File.join(current_dir, '**', '*'))
+          vm_data_files = Dir.glob(File.join(current_dir, '**', '*'))
 
-          @logger.debug("Files found in #{current_dir}: #{files}")
+          @logger.debug("Files found in #{current_dir}: #{vm_data_files}")
 
-          files.select! { |f| !File.directory?(f) }
-          files.select! { |f| f ~ /\.(vmdk|nvram|vmtm|vmx|vmxf)$/ }
+          vm_data_files.select! { |f| !File.directory?(f) }
+          vm_data_files.select! { |f| f ~ /\.(vmdk|nvram|vmtm|vmx|vmxf)$/ }
 
           @logger.debug("Copying #{files} to #{exported_path}")
 
-          FileUtils.cp_r(files, exported_path)
+          FileUtils.cp_r(vm_data_files, exported_path)
 
           @vm.ui.info('Compacting Vmware virtual disks')
 
@@ -176,8 +176,8 @@ module VagrantPlugins
             @logger.debug(d)
 
             unless io == :stdout
+              @env.ui.clear_line
               if /\d+%/ =~ d
-                @env.ui.clear_line
                 @env.ui.info(d.match(/\d+%/).to_a.pop, new_line: false)
               else
                 @logger.error(d)
@@ -210,20 +210,18 @@ module VagrantPlugins
           f.write('{"provider":"' + provider_name + '"}')
         end
 
-        # At this point we have the appliance and a metadata JSON
-        # This is all we need for a box, so do not add any further files if the
-        # bare option is set
-        return 0 if bare
-
         # Copy additional files
-        additional_files = Dir.glob(File.join(@vm.box.directory, '**', '*'))
-        additional_files.select! { |f| !File.directory?(f) }
-        additional_files.select! { |f| f !~ /(gz|core|lck|log|vmdk|ovf|ova)$/ }
-        additional_files.select! { |f| f !~ /(nvram|vmem|vmsd|vmsn|vmss|vmtm|vmx|vmxf)$/ }
-        additional_files.select! { |f| !File.file?(f.gsub(@vm.box.directory.to_s, @tmp_path.to_s)) }
+        unless bare
+          additional_files = Dir.glob(File.join(@vm.box.directory, '**', '*'))
+          additional_files.select! { |f| !File.directory?(f) }
+          additional_files.select! { |f| f !~ /(gz|core|lck|log|vmdk|ovf|ova)$/ }
+          additional_files.select! { |f| f !~ /(nvram|vmem|vmsd|vmsn|vmss|vmtm|vmx|vmxf)$/ }
+          additional_files.select! { |f| !File.file?(f.gsub(@vm.box.directory.to_s, @tmp_path.to_s)) }
 
-        @logger.debug("Copy includes #{additional_files} to #{@tmp_path}")
-        FileUtils.cp_r(additional_files, @tmp_path)
+          @logger.debug("Copy includes #{additional_files} to #{@tmp_path}")
+
+          FileUtils.cp_r(additional_files, @tmp_path)
+        end
 
         # Make sure the Vagrantfile includes a HMAC when the provider is virtualbox
         if @vm.provider_name.to_s == 'virtualbox'
@@ -267,8 +265,8 @@ module VagrantPlugins
 
         Vagrant::Util::SafeChdir.safe_chdir(@tmp_path) do
 
-          files = Dir.glob(File.join(@tmp_path, '**', '*'))
-          @logger.debug("Create box file #{@box_file_name} containing #{files}")
+          box_files = Dir.glob(File.join(@tmp_path, '**', '*'))
+          @logger.debug("Create box file #{@box_file_name} containing #{box_files}")
           bash_exec = Vagrant::Util::Which.which('bash').to_s;
 
           if File.executable?(bash_exec) && ['pv', 'tar', 'gzip'].all? {|cmd| Vagrant::Util::Which.which(cmd) != nil }
@@ -278,7 +276,7 @@ module VagrantPlugins
             @logger.debug('Using custom packaging command to create progress output')
             @env.ui.info('Starting compression', new_line: false)
 
-            files.each { |f|
+            box_files.each { |f|
               total_size += File.size(f)
               files_list.push(f.to_s.gsub(@tmp_path.to_s, '').gsub(/^[\/\\]+/, ''))
             }
@@ -309,7 +307,7 @@ module VagrantPlugins
             @env.ui.clear_line
 
           else
-            Vagrant::Util::Subprocess.execute('bsdtar', '-czf', @box_file_name, *files)
+            Vagrant::Util::Subprocess.execute('bsdtar', '-czf', @box_file_name, *box_files)
           end
         end
 
