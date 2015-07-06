@@ -213,6 +213,11 @@ module VagrantPlugins
           f.write('{"provider":"' + provider_name + '"}')
         end
 
+        # At this point we have the appliance and a metadata JSON
+        # This is all we need for a box, so do not add any further files if the
+        # bare option is set
+        return 0 if bare
+
         # Copy additional files
         additional_files = Dir.glob(File.join(@vm.box.directory, '**', '*'))
         additional_files.select! { |f| !File.directory?(f) }
