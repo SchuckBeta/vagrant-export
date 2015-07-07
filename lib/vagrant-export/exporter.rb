@@ -191,6 +191,38 @@ module VagrantPlugins
         @logger.debug("Exported VM to #{exported_path}")
       end
 
+      # This will copy the generated private key into the box and use
+      # it for SSH by default. We have to do this because we now generate
+      # random keypairs on boot, so packaged boxes would stop working
+      # without this.
+      # Samelessly copied from Vagrant::Action::General::Package
+      def setup_private_key
+
+        # If we don't have a data dir, we also do nothing (base package)
+        return if !@vm.data_dir
+
+        # If we don't have a generated private key, we do nothing
+        path = @vm.data_dir.join("private_key")
+        return if !path.file?
+
+        # Copy it into our box directory
+        dir = Pathname.new(@tmp_path)
+        new_path = dir.join("vagrant_private_key")
+        FileUtils.cp(path, new_path)
+
+        # Append it to the Vagrantfile (or create a Vagrantfile)
+        vf_path = dir.join("Vagrantfile")
+        mode = "w+"
+        mode = "a" if vf_path.file?
+        vf_path.open(mode) do |f|
+          f.binmode
+          f.puts
+          f.puts %Q[Vagrant.configure("2") do |config|]
+          f.puts %Q[  config.ssh.private_key_path = File.expand_path("../vagrant_private_key", __FILE__)]
+          f.puts %Q[end]
+        end
+      end
+
       def files(bare)
 
         provider_name = @vm.provider_name.to_s
@@ -223,6 +255,9 @@ module VagrantPlugins
           FileUtils.cp_r(additional_files, @tmp_path)
         end
 
+        # Include a generated private key if it exists
+        setup_private_key
+
         # Make sure the Vagrantfile includes a HMAC when the provider is virtualbox
         if @vm.provider_name.to_s == 'virtualbox'
 
@@ -250,7 +285,6 @@ module VagrantPlugins
               hmac_address = @vm.provider.driver.read_mac_address
               f.binmode
               f.puts
-              f.puts %Q[# Automatically added by export]
               f.puts %Q[Vagrant.configure("2") do |config|]
               f.puts %Q[  config.vm.base_mac = "#{hmac_address}"]
               f.puts %Q[end]
