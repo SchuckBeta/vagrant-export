@@ -161,7 +161,7 @@ module VagrantPlugins
 
         else
 
-          ovf_file = File.join(exported_path, @vm.box.name.gsub(/[^a-zA-Z0-9]+/, '_')) + '.ovf'
+          ovf_file = File.join(exported_path, 'box.ovf')
           vm_id = @vm.id.to_s
 
           opts = {}
