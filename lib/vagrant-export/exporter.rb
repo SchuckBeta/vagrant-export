@@ -302,28 +302,25 @@ module VagrantPlugins
           box_files = Dir.glob(File.join(@tmp_path, '**', '*'))
           @logger.debug("Create box file #{@box_file_name} containing #{box_files}")
           bash_exec = Vagrant::Util::Which.which('bash').to_s;
+          
+          total_size = 0
+          files_list = []
+          box_files.each { |f|
+            total_size += File.size(f)
+            files_list.push(f.to_s.gsub(@tmp_path.to_s, '').gsub(/^[\/\\]+/, ''))
+          }
+          @logger.debug("Complete size of files is #{total_size} bytes")
+          @logger.debug("Files argument for bash script: #{files_list}")
 
           if File.executable?(bash_exec) && ['pv', 'tar', 'gzip'].all? {|cmd| Vagrant::Util::Which.which(cmd) != nil }
-            total_size = 0
-            files_list = []
-
             @logger.debug('Using custom packaging command to create progress output')
             @env.ui.info('Starting compression', new_line: false)
-
-            box_files.each { |f|
-              total_size += File.size(f)
-              files_list.push(f.to_s.gsub(@tmp_path.to_s, '').gsub(/^[\/\\]+/, ''))
-            }
-
-            @logger.debug("Complete size of files is #{total_size} bytes")
 
             opts = {}
             opts[:notify] = [:stderr, :stdout]
 
             script_file = File.absolute_path(File.expand_path('../../../res/progress_tar.sh', __FILE__))
             files_list  = files_list.join(' ')
-
-            @logger.debug("Files argument for bash script: #{files_list}")
 
             Vagrant::Util::Subprocess.execute(bash_exec, script_file, @tmp_path.to_s, total_size.to_s, @box_file_name, files_list, opts) { |io, data|
               d = data.to_s
@@ -335,13 +332,11 @@ module VagrantPlugins
                 @env.ui.clear_line
                 @env.ui.info(p.pop.to_s + '%', new_line: false)
               end
-
             }
 
             @env.ui.clear_line
-
           else
-            Vagrant::Util::Subprocess.execute('bsdtar', '-czf', @box_file_name, *box_files)
+            Vagrant::Util::Subprocess.execute('bsdtar', '-czf', @box_file_name, '-C', @tmp_path.to_s, *files_list)
           end
         end
 
